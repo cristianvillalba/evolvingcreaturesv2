@@ -64,10 +64,12 @@ public class Main extends SimpleApplication implements ActionListener{
     Material bluemat;
     Material yellowmat;
     Material orangemat;
+    Material brownmat;
     
     boolean canlog = false;
     public static Logger log;
     ArrayList<MJCreature> creatures;
+    MJCreature playcreature;
     ArrayList<Material> allmaterials;
     private float time;
     private int generation = 0;
@@ -83,6 +85,10 @@ public class Main extends SimpleApplication implements ActionListener{
     
     
     private int state = 0;
+    private boolean applyForceUp = false;
+    private boolean applyForceDown = false;
+    private boolean applyForceLeft = false;
+    private boolean applyForceRight = false;
     
     
     
@@ -102,6 +108,7 @@ public class Main extends SimpleApplication implements ActionListener{
         }  
         
         Main app = new Main();
+        app.setPauseOnLostFocus(false);
         app.start();
     }
 
@@ -181,6 +188,9 @@ public class Main extends SimpleApplication implements ActionListener{
         creatures.add(newcreature03);
         creatures.add(newcreature04);
         creatures.add(newcreature05);
+        
+        playcreature = new MJCreature(rootNode, brownmat);
+        this.initFloor(newcreature05.GetPhysicState());
     }
     
     public void initMaterials() {
@@ -219,6 +229,9 @@ public class Main extends SimpleApplication implements ActionListener{
       
       yellowmat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
       yellowmat.setColor("Color", ColorRGBA.Yellow);
+      
+      brownmat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+      brownmat.setColor("Color", ColorRGBA.Brown);
       
       allmaterials.add(redmat);
       allmaterials.add(greenmat);
@@ -349,13 +362,38 @@ public class Main extends SimpleApplication implements ActionListener{
         inputManager.addMapping("load creature",new KeyTrigger(keyInput.KEY_1));
         inputManager.addMapping("save creature",new KeyTrigger(keyInput.KEY_2));
         
+        inputManager.addMapping("up",new KeyTrigger(keyInput.KEY_U));
+        inputManager.addMapping("down",new KeyTrigger(keyInput.KEY_J));
+        inputManager.addMapping("left",new KeyTrigger(keyInput.KEY_H));
+        inputManager.addMapping("right",new KeyTrigger(keyInput.KEY_K));
+        
         inputManager.addListener(this, "load creature");
         inputManager.addListener(this, "save creature");
+        
+        inputManager.addListener(this, "up");
+        inputManager.addListener(this, "down");
+        inputManager.addListener(this, "left");
+        inputManager.addListener(this, "right");
     }
     
 
     @Override
     public void simpleUpdate(float tpf) {
+        
+        
+        if (applyForceUp) {
+            playcreature.GetRootWorm().GetBodyControl().applyForce(new Vector3f(0, 0, -10) , Vector3f.ZERO.clone()); 
+        }
+        if (applyForceDown) {
+            playcreature.GetRootWorm().GetBodyControl().applyForce(new Vector3f(0, 0,10), Vector3f.ZERO.clone());  
+        }
+        if (applyForceLeft) {
+            playcreature.GetRootWorm().GetBodyControl().applyForce(new Vector3f(-10, 0, 0), Vector3f.ZERO.clone());
+        }
+        if (applyForceRight) {
+            playcreature.GetRootWorm().GetBodyControl().applyForce(new Vector3f(10, 0, 0), Vector3f.ZERO.clone());  
+        }
+        
         
         switch(state)
         {
@@ -367,6 +405,9 @@ public class Main extends SimpleApplication implements ActionListener{
                 {
                     creatures.get(i).tick(0.01f, false); //update physics with a fixed time
                 }
+                
+                //ticking also the play creature
+                playcreature.tick(0.01f, false);
                 
                 if (time > 10)
                 {
@@ -387,6 +428,9 @@ public class Main extends SimpleApplication implements ActionListener{
                 {
                     creatures.get(i).tick(0.01f, true); //update physics with a fixed time
                 }
+                
+                //ticking also the play creature
+                playcreature.tick(0.01f, true);
             
                 if ((Math.round(time) % changetargettime) == (changetargettime - 1))
                 {
@@ -414,7 +458,8 @@ public class Main extends SimpleApplication implements ActionListener{
                     {
                         creatures.get(i).EvaluateApproachVel(target.getWorldTranslation());
                     }
-
+                    
+                    playcreature.EvaluateApproachVel(target.getWorldTranslation());
                 }
                 break;
             }
@@ -442,6 +487,8 @@ public class Main extends SimpleApplication implements ActionListener{
             //System.out.println("creature " + i + " fitness: " + creatures.get(i).GetFitness());
         }
         
+        playcreature.SetFitness(playcreature.GetAverageVel());
+        
         Collections.sort(creatures);
         
         for (int i = 0; i < creatures.size(); i++)
@@ -449,6 +496,8 @@ public class Main extends SimpleApplication implements ActionListener{
             //reatures.get(i).SetFitness(creatures.get(i).GetAverageVel());
             System.out.println("creature " + i + " fitness: " + creatures.get(i).GetFitness());
         }
+        
+        System.out.println("play creature fitness: " + playcreature.GetFitness());
         
         MJCreature newcreature01 = new MJCreature(rootNode,redmat,creatures.get(0), false);
         this.initFloor(newcreature01.GetPhysicState());
@@ -475,6 +524,13 @@ public class Main extends SimpleApplication implements ActionListener{
         creatures.add(newcreature05);
         
         generation += 1;
+        System.out.println("Generation: " + generation);
+        SaveState();
+        
+        playcreature.KillAll();
+        
+        playcreature = new MJCreature(rootNode, brownmat);
+        this.initFloor(newcreature05.GetPhysicState());
     }
     
     private void RestartSimulation()
@@ -512,7 +568,7 @@ public class Main extends SimpleApplication implements ActionListener{
             if (creatures.size() > 0){
                 MJSavableState savestate = new MJSavableState();
                 savestate.setCreatures(creatures);
-                savestate.setGeneration(0);
+                savestate.setGeneration(generation);
                 savestate.setRandpositions(randpositions);
                 exporter.save(savestate, file);
             }
@@ -567,11 +623,36 @@ public class Main extends SimpleApplication implements ActionListener{
             SaveState();
         }
         
+        if ("up".equals(string)) {
+            if (isPressed) {
+                applyForceUp = true;
+            } else {
+                applyForceUp = false;
+            }
+        }
         
+        if ("down".equals(string)) {
+            if (isPressed) {
+                applyForceDown = true;
+            } else {
+                applyForceDown = false;
+            }
+        }
         
-        if (string.equals("force") && isPressed)
-        {
-            //wormbody.get(0).applyForce(Vector3f.UNIT_X.mult(1000f), Vector3f.ZERO);
+        if ("left".equals(string)) {
+            if (isPressed) {
+                applyForceLeft = true;
+            } else {
+                applyForceLeft = false;
+            }
+        }
+        
+        if ("right".equals(string)) {
+            if (isPressed) {
+                applyForceRight = true;
+            } else {
+                applyForceRight = false;
+            }
         }
     }
 }

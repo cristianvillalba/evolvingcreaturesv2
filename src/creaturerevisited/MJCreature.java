@@ -217,7 +217,7 @@ public class MJCreature implements Comparable, Savable{
         sensors = new MJNeuron[randsensor];
         
         //int randneuronsizev0 = MJMJFastMath.nextRandomInt(20, 30);
-        int randneuronsizev0 = 10;
+        int randneuronsizev0 = 20;
         MJNeuron[] neuronsv0 = new MJNeuron[randneuronsizev0];
         
         //int randneuronsize = MJFastMath.nextRandomInt(20, 30);
@@ -426,20 +426,25 @@ public class MJCreature implements Comparable, Savable{
     {
         float totals = 0;
         
-        System.out.println("distances: " + averagedistances);
+        //System.out.println("distances: " + averagedistances);
         
         for (int i = 0 ; i < averagedistances.size(); i++)
         {
             totals += averagedistances.get(i);
         }
         
-        System.out.println("total: " + (totals / ((float)averagedistances.size())));
+        //System.out.println("total: " + (totals / ((float)averagedistances.size())));
         return (totals / ((float)averagedistances.size()));
     }
     
     private void SetDistance(float v)
     {
         averagedistances.add(v);
+    }
+    
+    public MJNode GetRootWorm()
+    {
+        return worm.get(0);
     }
     
     public void EvaluateApproachVel(Vector3f targetpos)
