@@ -39,7 +39,7 @@ public class MJNeuron implements Savable {
     private float bias;
     public static float DECAY = 0.99f;
     public static float ACTIVATION_THRESHOLD = 0.2f;
-    public static float mutationrate = 0.30f;
+    public static float mutationrate = 0.01f;
     //public static float mutationrate = 10.1f;
     public static float randvalue = 0.01f;
     private int type;

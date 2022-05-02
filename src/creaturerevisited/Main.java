@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import jme3utilities.minie.FilterAll;
@@ -577,6 +578,8 @@ public class Main extends SimpleApplication implements ActionListener{
           //Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Error: Failed to save game!", ex);
             System.out.println("Error while saving: " + ex.getMessage());
         }
+        
+        System.out.println("State saved!...");
     }
     
     private void LoadState()
@@ -592,7 +595,7 @@ public class Main extends SimpleApplication implements ActionListener{
         
         creatures.clear();
         
-        creatures = loadedstate.getCreatures();
+        ArrayList<MJCreature > oldcreatures = loadedstate.getCreatures();
         
         randpositions.clear();
         
@@ -600,13 +603,19 @@ public class Main extends SimpleApplication implements ActionListener{
         
         generation = loadedstate.getGeneration();
         
-        for (int i = 0; i < creatures.size(); i++)
+        for (int i = 0; i < oldcreatures.size(); i++)
         {
-            creatures.get(i).InitExternalCreature(rootNode, allmaterials.get(i));
-            this.initFloor(creatures.get(i).GetPhysicState());
+            MJCreature newcreature01 = new MJCreature(rootNode,redmat,oldcreatures.get(i), false);
+            this.initFloor(newcreature01.GetPhysicState());
+            creatures.add(newcreature01);
         }
         
         RestartSimulation();
+        
+        System.out.println("State loaded...");
+        
+        MJFastMath.rand = new Random(57873620);//reset seed!
+        MJNode.target = Main.target; //reset target too
     }
     
     

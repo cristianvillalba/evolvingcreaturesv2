@@ -102,7 +102,7 @@ final public class MJFastMath {
     /**
      * A precreated random object for random numbers.
      */
-    public static final Random rand = new Random(57873620);
+    public static Random rand = new Random(57873620);
 
     /**
      * Returns true if the number is a power of 2 (2,4,8,16...)

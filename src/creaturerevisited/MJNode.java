@@ -50,7 +50,8 @@ public class MJNode extends Node implements Savable{
     
     public void SavePreviousPos()
     {
-        this.setUserData("previouspos", this.getWorldTranslation().clone());
+        //this.setUserData("previouspos", this.getWorldTranslation().clone());
+        this.setUserData("previouspos", this.getChild(0).getWorldTranslation().clone());
     }
     
     public Vector3f GetAverageVel()
@@ -62,7 +63,7 @@ public class MJNode extends Node implements Savable{
             previousvel = new Vector3f();
         }
         
-        Vector3f vel = this.getWorldTranslation().subtract(previousvel);
+        Vector3f vel = this.getChild(0).getWorldTranslation().subtract(previousvel);
         
         return vel;
     }

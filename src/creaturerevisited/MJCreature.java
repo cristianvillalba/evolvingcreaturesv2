@@ -323,6 +323,30 @@ public class MJCreature implements Comparable, Savable{
         }
     }
     
+    public void PrintBrain(ArrayList<MJNeuron[]> b)
+    {
+        System.out.println("Sens:");
+        for(int i = 0; i < b.get(0).length; i++)
+        {
+            System.out.println(b.get(0)[i].GetInfo());
+        }
+        System.out.println("Neur:");
+        //for(int i = 0; i < b.get(1).length; i++)
+        //{
+        //    System.out.println(b.get(1)[i].GetInfo());
+        //}
+        System.out.println("Neur2:");
+        for(int i = 0; i < b.get(1).length; i++)
+        {
+            System.out.println(b.get(1)[i].GetInfo());
+        }
+        System.out.println("Eff:");
+        for(int i = 0; i < b.get(2).length; i++)
+        {
+            System.out.println(b.get(2)[i].GetInfo());
+        }
+    }
+    
     private void CloneBrain(ArrayList<MJNeuron[]> brain, boolean mutate)
     {        
         neuronmain = new ArrayList<MJNeuron[]>();
@@ -434,7 +458,8 @@ public class MJCreature implements Comparable, Savable{
         }
         
         //System.out.println("total: " + (totals / ((float)averagedistances.size())));
-        return (totals / ((float)averagedistances.size()));
+        //return (totals / ((float)averagedistances.size()));
+        return totals;
     }
     
     private void SetDistance(float v)
@@ -459,15 +484,15 @@ public class MJCreature implements Comparable, Savable{
         float rate = 0;
      
          
-        if (totargetactual.length() <= 7.0f)
+        if (totargetactual.length() <= 3.0f)
         {
            this.SetDistance(0);
         }
         else
         {
 
-            Vector3f speedtowards = velocity.project(totargetactual);
-            //rate = 1/speedtowards.length() + totargetactual.length(); //distance + speed
+            //Vector3f speedtowards = velocity.project(totargetactual);
+            //rate = 1/speedtowards.length() * totargetactual.length(); //distance + speed
             
             //rate = 1/totargetactual.length();//only distance
             rate = totargetactual.length();//only distance
