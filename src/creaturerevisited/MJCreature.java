@@ -42,6 +42,7 @@ public class MJCreature implements Comparable, Savable{
     private ArrayList<MJNode> worm;
     private PhysicsSpace bulletstate;
     private float fitness;
+    private int wormsize = -1;
     
     
     public MJCreature()
@@ -56,7 +57,7 @@ public class MJCreature implements Comparable, Savable{
         
         bulletstate = LoadPhysicsBasic();
         
-        loadCreature(rootNode, creatmat);
+        loadCreature(rootNode, creatmat, -1);
         
         GenerateBrain();
     }
@@ -68,18 +69,9 @@ public class MJCreature implements Comparable, Savable{
         
         bulletstate = LoadPhysicsBasic();
         
-        loadCreature(rootNode, creatmat);
+        loadCreature(rootNode, creatmat, tocopy.GetWormLength());
         
         CloneBrain(tocopy.GetBrain(), mutate);
-    }
-    
-    public void InitExternalCreature(Node rootNode, Material creatmat)
-    {
-        worm = new ArrayList<MJNode>();
-        bulletstate = LoadPhysicsBasic();
-        loadCreature(rootNode, creatmat);
-        
-        ConnectBrain();
     }
     
     public PhysicsSpace GetPhysicState()
@@ -89,8 +81,7 @@ public class MJCreature implements Comparable, Savable{
     
     private PhysicsSpace LoadPhysicsBasic()
     {
-        PhysicsSpace space = new PhysicsSpace(PhysicsSpace.BroadphaseType.SIMPLE);
-            
+        PhysicsSpace space = new PhysicsSpace(PhysicsSpace.BroadphaseType.SIMPLE);        
         //stateManager.attach(space);
         //bulletAppState.getPhysicsSpace().setAccuracy(1/120f);
          
@@ -106,13 +97,24 @@ public class MJCreature implements Comparable, Savable{
     }
     
     
-    private void loadCreature(Node rootNode, Material redmat)
+    private void loadCreature(Node rootNode, Material redmat, int size)
     {
-        float ypos = 0;  
-        //ArrayList<GhostControl> wormghost = new ArrayList<GhostControl>();
+        float ypos = 25;  
+        int finalsize = 0;
         ArrayList<New6Dof> wormjoint = new ArrayList<New6Dof>();
         
-        for (int i = 0 ; i < 4 ; i++, ypos -= 5.0f)
+        if (size ==  -1)
+        {
+            finalsize = MJFastMath.nextRandomInt(4, 7);
+        }
+        else
+        {
+            finalsize = size;
+        }
+        
+        wormsize = finalsize;
+        
+        for (int i = 0 ; i < finalsize ; i++, ypos -= 5.0f)
         {
             Box dimensionbox = new Box(1.0f, 1.0f, 1.0f);
             Geometry body = new Geometry("part", dimensionbox);
@@ -138,7 +140,7 @@ public class MJCreature implements Comparable, Savable{
             //wormghost.add(ghost_control);
         }
         
-        for (int i = 0 ; i < 3; i++)
+        for (int i = 0 ; i < (finalsize - 1); i++)
         {
             Vector3f jointa = new Vector3f();
             Vector3f jointb = new Vector3f();
@@ -168,7 +170,7 @@ public class MJCreature implements Comparable, Savable{
             wormjoint.add(newcone);
         }
         
-        for (int i = 0; i < 4 ; i++)
+        for (int i = 0; i < finalsize ; i++)
         {
             //bulletstate.getPhysicsSpace().add(wormbody.get(i));
             //bulletstate.getPhysicsSpace().add(wormghost.get(i));
@@ -176,7 +178,7 @@ public class MJCreature implements Comparable, Savable{
             bulletstate.getPhysicsSpace().add(worm.get(i).GetGhostControl());
         }
         
-        for (int i = 0; i < 3 ; i++)
+        for (int i = 0; i < (finalsize -1) ; i++)
         {
             bulletstate.getPhysicsSpace().add(wormjoint.get(i));
         }
@@ -213,18 +215,16 @@ public class MJCreature implements Comparable, Savable{
         
         neuronmain = new ArrayList<MJNeuron[]>();
      
-        int randsensor = 8; // 2 eyes and 2 more other type sensors;
-        sensors = new MJNeuron[randsensor];
+        int randsensor = 6; // 2 eyes and more other type sensors;
+        int randnoteyessensor = MJFastMath.nextRandomInt(2, 7);
+        sensors = new MJNeuron[randsensor + randnoteyessensor];
         
-        //int randneuronsizev0 = MJMJFastMath.nextRandomInt(20, 30);
-        int randneuronsizev0 = 20;
+        int randneuronsizev0 = MJFastMath.nextRandomInt(6, 14);
+        //int randneuronsizev0 = 10;
         MJNeuron[] neuronsv0 = new MJNeuron[randneuronsizev0];
         
-        //int randneuronsize = MJFastMath.nextRandomInt(20, 30);
-        //int randneuronsize = 10;
-        //MJNeuron[] neurons = new MJNeuron[randneuronsize];
         
-        int randeffector = worm.size();
+        int randeffector = MJFastMath.nextRandomInt(6, 12);
         MJNeuron[] effectors = new MJNeuron[randeffector];
         
         neuronmain.add(sensors);
@@ -236,7 +236,7 @@ public class MJCreature implements Comparable, Savable{
         
         int randpartindex = MJFastMath.nextRandomInt(0, worm.size() - 1);
         MJNode randpart = worm.get(randpartindex);
-        for(int i = 0; i <  3; i++)
+        for(int i = 0; i <  3; i++)//first eye
         {
             MJNeuron sens2;
             
@@ -247,7 +247,7 @@ public class MJCreature implements Comparable, Savable{
         
         randpartindex = MJFastMath.nextRandomInt(0, worm.size() - 1);
         randpart = worm.get(randpartindex);
-        for(int i = 0; i <  3; i++)
+        for(int i = 0; i <  3; i++)//second eye
         { 
             MJNeuron sens2;
             
@@ -256,11 +256,12 @@ public class MJCreature implements Comparable, Savable{
             sensors[i + 3] = sens2;
         }
         
-        for(int i = 0; i <  2; i++)
+        for(int i = 0; i <  randnoteyessensor; i++)//other type of sensors
         {
             MJNeuron sens2;
+            int subtype = MJFastMath.nextRandomInt(-2, -1);
             
-            sens2 = new MJNeuron( 0, i-2);   
+            sens2 = new MJNeuron( 0, subtype);   
             int rpartindex = MJFastMath.nextRandomInt(0, worm.size() - 1);
             sens2.SetPartAndIndex(worm.get(rpartindex), rpartindex);
             sensors[i + 6] = sens2;
@@ -277,29 +278,17 @@ public class MJCreature implements Comparable, Savable{
             }
         }
         
-        /*for(int i = 0; i < neurons.length; i++)
-        {
-            MJNeuron neur = new MJNeuron(0.05f, 1, 0);
-            neurons[i] = neur;
-            
-            for (int k = 0 ; k < neuronsv0.length; k++)
-            {
-               neur.connect(neuronsv0[k]);
-            }
-        }*/
         
         for(int i = 0; i < effectors.length; i++)
         {
-            MJNode part =  worm.get(i);
+            randpartindex = MJFastMath.nextRandomInt(0, worm.size() - 1);
+            MJNode part =  worm.get(randpartindex);
+            int randtorqueaxis = MJFastMath.nextRandomInt(0,5);
             
-            MJNeuron eff = new MJNeuron(2, i % 6);
-            eff.SetPartAndIndex(part, i);
+            MJNeuron eff = new MJNeuron(2, randtorqueaxis);
+            eff.SetPartAndIndex(part, randpartindex);
             effectors[i] = eff;
             
-            //for (int k = 0 ; k < neurons.length; k++)
-            //{
-            //    eff.connect(neurons[k]);
-            //}
             
             for (int k = 0 ; k < neuronsv0.length; k++)
             {
@@ -311,11 +300,6 @@ public class MJCreature implements Comparable, Savable{
         {
             neuronsv0[i].GenerateWeights();
         }
-        
-        //for (int i = 0; i < neurons.length; i++)
-        //{
-        //    neurons[i].GenerateWeights();
-        //}
         
         for (int i = 0; i < effectors.length; i++)
         {
@@ -330,11 +314,7 @@ public class MJCreature implements Comparable, Savable{
         {
             System.out.println(b.get(0)[i].GetInfo());
         }
-        System.out.println("Neur:");
-        //for(int i = 0; i < b.get(1).length; i++)
-        //{
-        //    System.out.println(b.get(1)[i].GetInfo());
-        //}
+        
         System.out.println("Neur2:");
         for(int i = 0; i < b.get(1).length; i++)
         {
@@ -472,6 +452,16 @@ public class MJCreature implements Comparable, Savable{
         return worm.get(0);
     }
     
+    public int GetWormLength(){
+        
+        if (worm == null){
+            return wormsize;
+        }
+        else{
+            return worm.size();
+        }
+    }
+    
     public void EvaluateApproachVel(Vector3f targetpos)
     {
         //System.out.println("targetpos: " + targetpos + "\n");
@@ -491,10 +481,9 @@ public class MJCreature implements Comparable, Savable{
         else
         {
 
-            //Vector3f speedtowards = velocity.project(totargetactual);
+            Vector3f speedtowards = velocity.project(totargetactual);
             //rate = 1/speedtowards.length() * totargetactual.length(); //distance + speed
             
-            //rate = 1/totargetactual.length();//only distance
             rate = totargetactual.length();//only distance
             //System.out.println("rate:" + rate + "\n");
             this.SetDistance(rate);
@@ -565,6 +554,7 @@ public class MJCreature implements Comparable, Savable{
             capsule.writeSavableArrayList(neuronsv0, "neuronsv0", null);
             //capsule.writeSavableArrayList(neurons, "neurons", null);
             capsule.writeSavableArrayList(effectors, "effectors", null);
+            capsule.write(wormsize, "wormsize", 0);
         }
     }
 
@@ -576,8 +566,10 @@ public class MJCreature implements Comparable, Savable{
         ArrayList<MJNeuron> neuronsv0 = capsule.readSavableArrayList("neuronsv0", null);
         //ArrayList<MJNeuron> neurons = capsule.readSavableArrayList("neurons", null);
         ArrayList<MJNeuron> effectors = capsule.readSavableArrayList("effectors", null);
+        wormsize = capsule.readInt("wormsize", 0);
         
         neuronmain = new ArrayList<MJNeuron[]>();
+        
         
         if (sensors != null && neuronsv0 != null && effectors != null){
             MJNeuron[] sens = new MJNeuron[sensors.size()];

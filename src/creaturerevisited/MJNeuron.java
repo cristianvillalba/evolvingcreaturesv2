@@ -41,7 +41,7 @@ public class MJNeuron implements Savable {
     public static float ACTIVATION_THRESHOLD = 0.2f;
     public static float mutationrate = 0.01f;
     //public static float mutationrate = 10.1f;
-    public static float randvalue = 0.01f;
+    public static float randvalue = 0.1f;
     private int type;
     private int subtype;
     private int axis;
@@ -62,9 +62,10 @@ public class MJNeuron implements Savable {
     }
     
     public static float round(float d, int decimalPlace) {
-        BigDecimal bd = new BigDecimal(Float.toString(d));
-        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
-        return bd.floatValue();
+        //BigDecimal bd = new BigDecimal(Float.toString(d));
+        //bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        //return bd.floatValue();
+        return d;
     }
     
     public String GetInfo()
@@ -158,8 +159,8 @@ public class MJNeuron implements Savable {
             }
         }
         
-        //function = MJFastMath.nextRandomInt(0, 8);
-        function = 0;
+        function = MJFastMath.nextRandomInt(0, 8);//chose from a list of functions
+        //function = 0;//simple function
         
         bias = 1.0f;
        
@@ -203,73 +204,61 @@ public class MJNeuron implements Savable {
             newmirrored.SetSubtype(subtype);
             newmirrored.SetPartIndex(partindex);
             
-            //if (MJFastMath.nextRandomFloat() < mutationrate){
-            //    newmirrored.SetFunction(MJFastMath.nextRandomInt(0, 8));
-            //}
-            //else
-            //{
-               newmirrored.SetFunction(0);
-            //}
+            if (type == 1 && MJFastMath.nextRandomFloat() < 0.1){
+                newmirrored.SetFunction(MJFastMath.nextRandomInt(0, 8)); //activate other functions
+            }
+            else
+            {
+               newmirrored.SetFunction(function); //simple perceptron
+            }
                 
             
             newmirrored.SetEffectorType(effectortype);
             
             ArrayList<Float> nweig = (ArrayList<Float>)weights.clone();
-             
-            for (int j = 0 ; j < weights.size(); j++)
+            
+            if (type != 0) //if type is different from sensors
             {
-                if (MJFastMath.nextRandomFloat() < mutationrate){
-                    
-                    //float r = nweig.get(j) * MJFastMath.nextRandomFloat()*0.001f - 0.0005f;
-                    //float r = nweig.get(j) * MJFastMath.nextRandomFloat()*0.0001f - 0.00005f;
-                    //System.out.println("Weight original: " + nweig.get(j));
-                    float r = nweig.get(j) * (1.0f + MJFastMath.nextRandomFloat()*randvalue - randvalue/2);
-                    //System.out.println("Weight mutated: " + r);
-                    //nweig.set(j, MJFastMath.nextRandomFloat());   
-                    nweig.set(j, r);   
+                for (int j = 0 ; j < weights.size(); j++)
+                {
+                    if (MJFastMath.nextRandomFloat() < 0.2){
+
+                        float r = nweig.get(j) * (1.0f + MJFastMath.nextRandomFloat()*randvalue - randvalue/2); 
+                        nweig.set(j, r);   
+                    }
                 }
             }
+            
                         
             newmirrored.SetWeights(nweig);
             
             Vector3f torqueclone = torquedirection.clone();
             newmirrored.SetTorqueDir(torqueclone);
             newmirrored.SetCentralForceRatio(centralforceratio);
+            newmirrored.SetTorqueForceRatio(torqueforceratio);
             
-            //if (MJFastMath.nextRandomFloat() < mutationrate){
-            //    float newtorqueforceratio = torqueforceratio  * (1.0f + MJFastMath.nextRandomFloat()*0.1f - 0.1f/2);
-            //    newmirrored.SetTorqueForceRatio(newtorqueforceratio);
-            //}
             
-            //Vector3f torqueclone = torquedirection.clone();
+            if (type == 2 && MJFastMath.nextRandomFloat() < 0.05){
+                float newtorqueforceratio = torqueforceratio  * (1.0f + MJFastMath.nextRandomFloat()*0.1f - 0.1f/2);
+                newmirrored.SetTorqueForceRatio(newtorqueforceratio);
+            }
             
-            if (MJFastMath.nextRandomFloat() < mutationrate){
+            
+            //change torque direction of effector types
+            if (type == 2 && MJFastMath.nextRandomFloat() < 0.05){
                 torqueclone.set(MJFastMath.nextRandomFloat()-0.5f,MJFastMath.nextRandomFloat()-0.5f, MJFastMath.nextRandomFloat()-0.5f).normalizeLocal();
                 newmirrored.SetTorqueDir(torqueclone);
             }
-            //if (MJFastMath.nextRandomFloat() < mutationrate){
-           //     torqueclone.set(MJFastMath.nextRandomFloat()*0.3f - 0.15f,MJFastMath.nextRandomFloat()*0.3f - 0.15f, MJFastMath.nextRandomFloat()*0.3f - 0.15f).normalizeLocal();
-          //  }
             
-            //newmirrored.SetTorqueDir(torqueclone);
-            
-            //float randforce = 1.0f + MJFastMath.nextRandomFloat()*0.5f - 0.25f;
-            //float randforce = 1.0f + this.Gaussian(0f, 0.25f);
-            
-            //newmirrored.SetCentralForceRatio(centralforceratio);
-            //newmirrored.SetCentralForceRatio(randforce*centralforceratio);
-            
-            //randforce = 1.0f + MJFastMath.nextRandomFloat()*0.5f - 0.25f;
-            //randforce = 1.0f + this.Gaussian(0f, 0.25f);
-             
-            //newmirrored.SetTorqueForceRatio(torqueforceratio);
-            //newmirrored.SetTorqueForceRatio(randforce*torqueforceratio);
-                     
-            //if (MJFastMath.nextRandomFloat() < mutationrate){
-            //    float newbias = bias * (1.0f + MJFastMath.nextRandomFloat()*randvalue - randvalue/2);
-            //    newmirrored.SetBias(newbias);
-            //}
-            //newmirrored.SetBias(bias);
+                   
+            if (type != 0 && MJFastMath.nextRandomFloat() < 0.05){
+                float newbias = bias * (1.0f + MJFastMath.nextRandomFloat()*randvalue - randvalue/2);
+                newmirrored.SetBias(newbias);
+            }
+            else
+            {
+                newmirrored.SetBias(bias);
+            }
             
             return newmirrored;
         }
@@ -399,7 +388,7 @@ public class MJNeuron implements Savable {
                     {
                         if (part.getParent() != null){
                             
-                            Vector3f vectora = part.localToWorld(Vector3f.UNIT_Z, null).subtract(part.getWorldTranslation()).normalize();
+                            Vector3f vectora = part.getChild(0).localToWorld(Vector3f.UNIT_Z, null).subtract(part.getChild(0).getWorldTranslation()).normalize();
                             Vector3f vectorb = part.getParent().localToWorld(Vector3f.UNIT_Z, null).subtract(part.getParent().getWorldTranslation()).normalize();
                             
                             float angle = vectora.angleBetween(vectorb);
@@ -422,7 +411,7 @@ public class MJNeuron implements Savable {
                             //System.out.println("touch");
                             return 0.1f;
                         }
-                        else if (part.getWorldTranslation().y < -17.0f)
+                        else if (part.getChild(0).getWorldTranslation().y < -17.0f)
                         {
                             //System.out.println("touch ground");
                             return 0.15f;
@@ -434,11 +423,11 @@ public class MJNeuron implements Savable {
                     }
                     case 2:
                     {
-                        if (MJNode.target != null && !Float.isNaN(MJNode.target.getWorldRotation().getX()) && !Float.isNaN(part.getWorldTranslation().x) && !Float.isNaN(part.getWorldRotation().getX())){
+                        if (MJNode.target != null && !Float.isNaN(MJNode.target.getWorldRotation().getX()) && !Float.isNaN(part.getChild(0).getWorldTranslation().x) && !Float.isNaN(part.getChild(0).getWorldRotation().getX())){
                             switch(axis){
                                 case 0:
                                 {
-                                    float distanceaxis = part.worldToLocal(MJNode.target.getWorldTranslation(), null).normalize().x;
+                                    float distanceaxis = part.getChild(0).worldToLocal(MJNode.target.getWorldTranslation(), null).normalize().x;
                                     distanceaxis = MJNeuron.round(distanceaxis,2);
                                     //System.out.println("distance x:" + distanceaxis);
                                     return distanceaxis;
@@ -446,7 +435,7 @@ public class MJNeuron implements Savable {
                                 }
                                 case 1:
                                 {
-                                    float distanceaxis = part.worldToLocal(MJNode.target.getWorldTranslation(), null).normalize().y;
+                                    float distanceaxis = part.getChild(0).worldToLocal(MJNode.target.getWorldTranslation(), null).normalize().y;
                                     distanceaxis = MJNeuron.round(distanceaxis,2);
                                     //System.out.println("distance y:" + distanceaxis);
                                     return distanceaxis;
@@ -454,7 +443,7 @@ public class MJNeuron implements Savable {
                                 }
                                 case 2:
                                 {
-                                    float distanceaxis = part.worldToLocal(MJNode.target.getWorldTranslation(), null).normalize().z;
+                                    float distanceaxis = part.getChild(0).worldToLocal(MJNode.target.getWorldTranslation(), null).normalize().z;
                                     distanceaxis = MJNeuron.round(distanceaxis,2);
                                     //System.out.println("distance z:" + distanceaxis);
                                     return distanceaxis;
@@ -615,11 +604,11 @@ public class MJNeuron implements Savable {
                     Vector3f finaldirection;
                                 
                     //if (totalWeight > 0){
-                        finaldirection = part.localToWorld(torquedirection, null).subtract(part.getWorldTranslation()).normalize();
+                        finaldirection = part.getChild(0).localToWorld(torquedirection, null).subtract(part.getChild(0).getWorldTranslation()).normalize();
                     //}
                     //else
                     //{
-                        //finaldirection = part.localToWorld(torquedirection.mult(-1.0f), null).subtract(part.getWorldTranslation()).normalize();
+                        //finaldirection = part.getChild(0).localToWorld(torquedirection.mult(-1.0f), null).subtract(part.getChild(0).getWorldTranslation()).normalize();
                         
                     //}
                                 
@@ -794,6 +783,6 @@ public class MJNeuron implements Savable {
         centralforceratio = capsule.readFloat("centralforceratio", 0);
         torqueforceratio = capsule.readFloat("torqueforceratio", 0);
         bias = capsule.readFloat("bias", 0);
-        mutationrate = capsule.readFloat("mutationrate", 0);
+        //mutationrate = capsule.readFloat("mutationrate", 0); //dont read mutationrate from saved state, use the actual mutation rate instead
     }
 }

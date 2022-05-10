@@ -45,7 +45,7 @@ import jme3utilities.minie.FilterAll;
  * Move your Logic into AppStates or Controls
  * @author normenhansen
  */
-public class Main extends SimpleApplication implements ActionListener{
+public class Main extends SimpleApplication implements ActionListener, AnalogListener{
     
     private RigidBodyControl    floor_phy;
     private RigidBodyControl    wall01_phy;
@@ -70,6 +70,8 @@ public class Main extends SimpleApplication implements ActionListener{
     boolean canlog = false;
     public static Logger log;
     ArrayList<MJCreature> creatures;
+    private int numberofcreatures = 100;
+    private int numberofsurvivals = (int)(numberofcreatures * 0.1f);
     MJCreature playcreature;
     ArrayList<Material> allmaterials;
     private float time;
@@ -81,7 +83,7 @@ public class Main extends SimpleApplication implements ActionListener{
     private ArrayList<Vector3f> randpositions = new ArrayList<Vector3f>();
     private int randpositionsize = 5;
     private int changetargettime = 30;
-    private int checkfitnessmaxtime = Math.round((changetargettime * randpositionsize) / 6);
+    private int checkfitnessmaxtime = Math.round((changetargettime * randpositionsize) / 20);
     private float checkfitnesstime = 0;
     
     
@@ -168,30 +170,21 @@ public class Main extends SimpleApplication implements ActionListener{
     
     public void loadCreatures()
     {
-        MJCreature newcreature01 = new MJCreature(rootNode, redmat);
-        this.initFloor(newcreature01.GetPhysicState());
-
-        MJCreature newcreature02 = new MJCreature(rootNode, greenmat);
-        this.initFloor(newcreature02.GetPhysicState());
+        //MJCreature newcreature01 = new MJCreature(rootNode, redmat);
+        //this.initFloor(newcreature01.GetPhysicState());
         
-        MJCreature newcreature03 = new MJCreature(rootNode, bluemat);
-        this.initFloor(newcreature03.GetPhysicState());
+        //creatures.add(newcreature01);
         
-        MJCreature newcreature04 = new MJCreature(rootNode, orangemat);
-        this.initFloor(newcreature04.GetPhysicState());
-        
-        MJCreature newcreature05 = new MJCreature(rootNode, yellowmat);
-        this.initFloor(newcreature05.GetPhysicState());
-
-        
-        creatures.add(newcreature01);
-        creatures.add(newcreature02);
-        creatures.add(newcreature03);
-        creatures.add(newcreature04);
-        creatures.add(newcreature05);
+        for (int i = 0; i < numberofcreatures; i++)
+        {
+            MJCreature newcreature02 = new MJCreature(rootNode, redmat);
+            this.initFloor(newcreature02.GetPhysicState());
+            
+            creatures.add(newcreature02);
+        }
         
         playcreature = new MJCreature(rootNode, brownmat);
-        this.initFloor(newcreature05.GetPhysicState());
+        this.initFloor(playcreature.GetPhysicState());
     }
     
     public void initMaterials() {
@@ -368,6 +361,11 @@ public class Main extends SimpleApplication implements ActionListener{
         inputManager.addMapping("left",new KeyTrigger(keyInput.KEY_H));
         inputManager.addMapping("right",new KeyTrigger(keyInput.KEY_K));
         
+        inputManager.addMapping("targetup",new KeyTrigger(keyInput.KEY_G));
+        inputManager.addMapping("targetdown",new KeyTrigger(keyInput.KEY_B));
+        inputManager.addMapping("targetleft",new KeyTrigger(keyInput.KEY_V));
+        inputManager.addMapping("targetright",new KeyTrigger(keyInput.KEY_N));
+        
         inputManager.addListener(this, "load creature");
         inputManager.addListener(this, "save creature");
         
@@ -375,6 +373,10 @@ public class Main extends SimpleApplication implements ActionListener{
         inputManager.addListener(this, "down");
         inputManager.addListener(this, "left");
         inputManager.addListener(this, "right");
+        inputManager.addListener(this, "targetup");
+        inputManager.addListener(this, "targetdown");
+        inputManager.addListener(this, "targetleft");
+        inputManager.addListener(this, "targetright");
     }
     
 
@@ -492,24 +494,60 @@ public class Main extends SimpleApplication implements ActionListener{
         
         Collections.sort(creatures);
         
-        for (int i = 0; i < creatures.size(); i++)
-        {
+        //for (int i = 0; i < creatures.size(); i++)
+        //{
             //reatures.get(i).SetFitness(creatures.get(i).GetAverageVel());
-            System.out.println("creature " + i + " fitness: " + creatures.get(i).GetFitness());
-        }
-        
+            //System.out.println("creature " + i + " fitness: " + creatures.get(i).GetFitness());
+        //}
+        System.out.println("creature " + 0 + " fitness: " + creatures.get(0).GetFitness());
         System.out.println("play creature fitness: " + playcreature.GetFitness());
         
-        MJCreature newcreature01 = new MJCreature(rootNode,redmat,creatures.get(0), false);
-        this.initFloor(newcreature01.GetPhysicState());
-        MJCreature newcreature02 = new MJCreature(rootNode,greenmat,creatures.get(0), true);
-        this.initFloor(newcreature02.GetPhysicState());
-        MJCreature newcreature03 = new MJCreature(rootNode,bluemat,creatures.get(0), true);
-        this.initFloor(newcreature03.GetPhysicState());
-        MJCreature newcreature04 = new MJCreature(rootNode,orangemat,creatures.get(0), true);
-        this.initFloor(newcreature04.GetPhysicState());
-        MJCreature newcreature05 = new MJCreature(rootNode,yellowmat,creatures.get(0), true);
-        this.initFloor(newcreature05.GetPhysicState());
+        ArrayList<MJCreature> newlistofcreatures = new ArrayList<MJCreature>();
+        
+        //first let the creatures survive the generation
+        float lastfitness = -1.0f;
+        int lastindex = 0;
+        
+        for (int i = 0; i < numberofsurvivals; i++)
+        {
+            while(lastfitness == creatures.get(lastindex).GetFitness() && lastindex < creatures.size())
+            {
+                lastindex++;
+            }
+            MJCreature survival = new MJCreature(rootNode, redmat, creatures.get(lastindex), false);
+            this.initFloor(survival.GetPhysicState());
+            
+            newlistofcreatures.add(survival);
+            
+            lastfitness = creatures.get(lastindex).GetFitness();
+            lastindex++;
+        }
+        
+        int togenerate = numberofcreatures - numberofsurvivals;
+        int previouscreated = 0;
+        
+        //then fill the population with kids
+        for (int i = 0; i < numberofsurvivals; i++)
+        {
+            double rate = 0.33f;
+            int howmanychilds = (int)((togenerate  - previouscreated)* rate);
+            previouscreated += howmanychilds;
+            
+            for (int n = 0; n < howmanychilds; n++)
+            {   
+                MJCreature newchild = new MJCreature(rootNode,greenmat,creatures.get(i), true);
+                this.initFloor(newchild.GetPhysicState());
+                newlistofcreatures.add(newchild);
+            }
+        }
+        
+        //finally fill the rest with random creatures
+        while(newlistofcreatures.size() < (numberofcreatures))
+        {
+            MJCreature newchild = new MJCreature(rootNode, greenmat);
+            this.initFloor(newchild.GetPhysicState());
+            newlistofcreatures.add(newchild);
+        }
         
         for (int i = 0; i < creatures.size(); i++)
         {
@@ -518,11 +556,11 @@ public class Main extends SimpleApplication implements ActionListener{
         
         creatures.clear();
         
-        creatures.add(newcreature01);
-        creatures.add(newcreature02);
-        creatures.add(newcreature03);
-        creatures.add(newcreature04);
-        creatures.add(newcreature05);
+        for (int i = 0; i < newlistofcreatures.size(); i++)
+        {
+            creatures.add(newlistofcreatures.get(i));
+        }
+        
         
         generation += 1;
         System.out.println("Generation: " + generation);
@@ -531,7 +569,7 @@ public class Main extends SimpleApplication implements ActionListener{
         playcreature.KillAll();
         
         playcreature = new MJCreature(rootNode, brownmat);
-        this.initFloor(newcreature05.GetPhysicState());
+        this.initFloor(playcreature.GetPhysicState());
     }
     
     private void RestartSimulation()
@@ -662,6 +700,22 @@ public class Main extends SimpleApplication implements ActionListener{
             } else {
                 applyForceRight = false;
             }
+        }
+    }
+
+    @Override
+    public void onAnalog(String name, float arg1, float arg2) {
+        if (name.equals("targetup")){
+             target.move(0f, 0f, -0.3f);
+        }
+        if (name.equals("targetdown")) {
+             target.move(0f, 0f, 0.3f);
+        }
+        if (name.equals("targetleft")) {
+             target.move(-0.3f, 0f, 0f);
+        }
+        if (name.equals("targetright")) {
+             target.move(0.3f, 0f, 0f);
         }
     }
 }
